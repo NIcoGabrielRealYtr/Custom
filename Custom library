@@ -1,6 +1,5 @@
 local library = {}
 
--- Services
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
@@ -29,120 +28,106 @@ local function dragify(frame)
 	end)
 end
 
--- Main Window
 function library:CreateWindow(titleText)
 	local main = Instance.new("Frame", gui)
-	main.Size = UDim2.new(0, 700, 0, 500)
-	main.Position = UDim2.new(0.5, -350, 0.5, -250)
-	main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	main.Size = UDim2.new(0, 400, 0, 300)
+	main.Position = UDim2.new(0.5, -200, 0.5, -150)
+	main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	main.BorderSizePixel = 0
-	main.Name = "MainUI"
 
 	local title = Instance.new("TextLabel", main)
-	title.Text = titleText or "Title"
-	title.Size = UDim2.new(0, 200, 0, 40)
-	title.Position = UDim2.new(0, 20, 0, 10)
-	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Size = UDim2.new(1, -40, 0, 30)
+	title.Position = UDim2.new(0, 10, 0, 10)
+	title.Text = titleText or "UI Library"
 	title.Font = Enum.Font.SourceSansBold
-	title.TextSize = 32
+	title.TextSize = 24
+	title.TextColor3 = Color3.new(1, 1, 1)
 	title.BackgroundTransparency = 1
+	title.TextXAlignment = Enum.TextXAlignment.Left
 
 	local close = Instance.new("TextButton", main)
 	close.Text = "X"
 	close.Size = UDim2.new(0, 30, 0, 30)
-	close.Position = UDim2.new(1, -40, 0, 10)
+	close.Position = UDim2.new(1, -35, 0, 10)
 	close.BackgroundTransparency = 1
 	close.TextColor3 = Color3.new(1, 1, 1)
 	close.Font = Enum.Font.SourceSansBold
-	close.TextSize = 24
+	close.TextSize = 22
 	close.MouseButton1Click:Connect(function()
 		gui:Destroy()
 	end)
 
 	dragify(main)
 
+	local tabButtons = {}
 	local currentTab = nil
-	local tabList = {}
-
-	-- Tab Creation
-	local function createTab(tabName)
-		local tabButton = Instance.new("TextButton", main)
-		tabButton.Size = UDim2.new(0, 160, 0, 50)
-		tabButton.Position = UDim2.new(0, 20, 0, 60 + #tabList * 60)
-		tabButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-		tabButton.Text = tabName
-		tabButton.Font = Enum.Font.SourceSansBold
-		tabButton.TextSize = 26
-		tabButton.TextColor3 = Color3.new(1, 1, 1)
-
-		local tabContent = Instance.new("Frame", main)
-		tabContent.Size = UDim2.new(0, 470, 0, 400)
-		tabContent.Position = UDim2.new(0, 200, 0, 60)
-		tabContent.BackgroundTransparency = 1
-		tabContent.Visible = false
-		tabContent.Name = "TabContent_" .. tabName
-
-		tabButton.MouseButton1Click:Connect(function()
-			if currentTab then
-				currentTab.Visible = false
-			end
-			tabContent.Visible = true
-			currentTab = tabContent
-		end)
-
-		table.insert(tabList, tabButton)
-
-		if #tabList == 1 then
-			tabContent.Visible = true
-			currentTab = tabContent
-		end
-
-		local sections = {}
-		local sectionYOffset = 0
-
-		return {
-			AddSection = function(_, sectionName)
-				local sectionLabel = Instance.new("TextLabel", tabContent)
-				sectionLabel.Size = UDim2.new(1, 0, 0, 40)
-				sectionLabel.Position = UDim2.new(0, 0, 0, sectionYOffset)
-				sectionLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-				sectionLabel.Text = sectionName
-				sectionLabel.Font = Enum.Font.SourceSansBold
-				sectionLabel.TextSize = 26
-				sectionLabel.TextColor3 = Color3.new(1, 1, 1)
-				sectionYOffset += 50
-
-				local buttonYOffset = sectionYOffset
-
-				return {
-					AddButton = function(_, buttonText, callback)
-						local button = Instance.new("TextButton", tabContent)
-						button.Size = UDim2.new(1, 0, 0, 50)
-						button.Position = UDim2.new(0, 0, 0, buttonYOffset)
-						button.BackgroundColor3 = Color3.fromRGB(160, 160, 160)
-						button.Text = buttonText
-						button.Font = Enum.Font.SourceSansBold
-						button.TextSize = 26
-						button.TextColor3 = Color3.new(1, 1, 1)
-						button.MouseButton1Click:Connect(callback)
-
-						local icon = Instance.new("ImageLabel", button)
-						icon.Size = UDim2.new(0, 30, 0, 30)
-						icon.Position = UDim2.new(1, -40, 0.5, -15)
-						icon.BackgroundTransparency = 1
-						icon.Image = "rbxassetid://00000000" -- Change this to a valid fingerprint image
-
-						buttonYOffset += 60
-						sectionYOffset = buttonYOffset
-					end
-				}
-			end
-		}
-	end
+	local tabYOffset = 50
 
 	return {
-		AddTab = function(_, name)
-			return createTab(name)
+		AddTab = function(_, tabName)
+			local tabBtn = Instance.new("TextButton", main)
+			tabBtn.Size = UDim2.new(0, 100, 0, 30)
+			tabBtn.Position = UDim2.new(0, 10, 0, tabYOffset)
+			tabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			tabBtn.Text = tabName
+			tabBtn.TextColor3 = Color3.new(1, 1, 1)
+			tabBtn.Font = Enum.Font.SourceSansBold
+			tabBtn.TextSize = 20
+
+			tabYOffset += 35
+
+			local tabFrame = Instance.new("Frame", main)
+			tabFrame.Size = UDim2.new(1, -120, 1, -60)
+			tabFrame.Position = UDim2.new(0, 110, 0, 50)
+			tabFrame.BackgroundTransparency = 1
+			tabFrame.Visible = false
+
+			local sectionYOffset = 0
+
+			tabBtn.MouseButton1Click:Connect(function()
+				if currentTab then
+					currentTab.Visible = false
+				end
+				tabFrame.Visible = true
+				currentTab = tabFrame
+			end)
+
+			if not currentTab then
+				currentTab = tabFrame
+				tabFrame.Visible = true
+			end
+
+			return {
+				AddSection = function(_, sectionName)
+					local sectionLabel = Instance.new("TextLabel", tabFrame)
+					sectionLabel.Size = UDim2.new(1, 0, 0, 30)
+					sectionLabel.Position = UDim2.new(0, 0, 0, sectionYOffset)
+					sectionLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+					sectionLabel.Text = sectionName
+					sectionLabel.TextColor3 = Color3.new(1, 1, 1)
+					sectionLabel.Font = Enum.Font.SourceSansBold
+					sectionLabel.TextSize = 20
+					sectionYOffset += 35
+
+					local buttonYOffset = sectionYOffset
+
+					return {
+						AddButton = function(_, text, callback)
+							local button = Instance.new("TextButton", tabFrame)
+							button.Size = UDim2.new(1, 0, 0, 30)
+							button.Position = UDim2.new(0, 0, 0, buttonYOffset)
+							button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+							button.Text = text
+							button.TextColor3 = Color3.new(1, 1, 1)
+							button.Font = Enum.Font.SourceSansBold
+							button.TextSize = 18
+							button.MouseButton1Click:Connect(callback)
+							buttonYOffset += 35
+							sectionYOffset = buttonYOffset
+						end
+					}
+				end
+			}
 		end
 	}
 end
