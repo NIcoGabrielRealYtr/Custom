@@ -1,56 +1,99 @@
 local UILibrary = {}
 
--- Utility: Rounded corners
 local function roundify(obj, radius)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, radius or 8)
 	corner.Parent = obj
 end
 
--- Utility: Add border stroke
-local function addStroke(obj)
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(64, 64, 64)
-	stroke.Thickness = 1
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = obj
-end
-
--- Create base UI window
+-- Tab handling
 function UILibrary:CreateWindow(titleText)
-	local screenGui = Instance.new("ScreenGui")
+	local player = game.Players.LocalPlayer
+	local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 	screenGui.Name = "CustomUILibrary"
 	screenGui.ResetOnSpawn = false
-	screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	local main = Instance.new("Frame")
-	main.Size = UDim2.new(0, 360, 0, 300)
-	main.Position = UDim2.new(0.5, -180, 0.5, -150)
+	main.Size = UDim2.new(0, 400, 0, 350)
+	main.Position = UDim2.new(0.5, -200, 0.5, -175)
 	main.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
 	main.Parent = screenGui
 	roundify(main)
-	addStroke(main)
 
-	local title = Instance.new("TextLabel")
-	title.Text = titleText or "Window"
+	local title = Instance.new("TextLabel", main)
 	title.Size = UDim2.new(1, -20, 0, 30)
 	title.Position = UDim2.new(0, 10, 0, 5)
 	title.BackgroundTransparency = 1
+	title.Text = titleText or "UI Library"
 	title.TextColor3 = Color3.fromRGB(255, 255, 255)
 	title.Font = Enum.Font.GothamBold
 	title.TextSize = 16
 	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.Parent = main
 
-	return main
+	local tabHolder = Instance.new("Frame", main)
+	tabHolder.Size = UDim2.new(1, 0, 0, 30)
+	tabHolder.Position = UDim2.new(0, 0, 0, 40)
+	tabHolder.BackgroundTransparency = 1
+
+	local tabLayout = Instance.new("UIListLayout", tabHolder)
+	tabLayout.FillDirection = Enum.FillDirection.Horizontal
+	tabLayout.Padding = UDim.new(0, 4)
+	tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local contentFrame = Instance.new("Frame", main)
+	contentFrame.Size = UDim2.new(1, -20, 1, -80)
+	contentFrame.Position = UDim2.new(0, 10, 0, 80)
+	contentFrame.BackgroundTransparency = 1
+
+	local tabs = {}
+
+	local function switchTo(tabName)
+		for name, frame in pairs(tabs) do
+			frame.Visible = (name == tabName)
+		end
+	end
+
+	local function addTab(tabName)
+		local button = Instance.new("TextButton", tabHolder)
+		button.Text = tabName
+		button.Size = UDim2.new(0, 100, 1, 0)
+		button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		button.Font = Enum.Font.Gotham
+		button.TextSize = 14
+		button.AutoButtonColor = true
+		roundify(button)
+
+		local tabContent = Instance.new("Frame", contentFrame)
+		tabContent.Size = UDim2.new(1, 0, 1, 0)
+		tabContent.Visible = false
+		tabContent.BackgroundTransparency = 1
+
+		tabs[tabName] = tabContent
+
+		button.MouseButton1Click:Connect(function()
+			switchTo(tabName)
+		end)
+
+		if #tabHolder:GetChildren() == 2 then -- first tab
+			switchTo(tabName)
+		end
+
+		return tabContent
+	end
+
+	return {
+		Main = main,
+		AddTab = addTab
+	}
 end
 
--- Create a section label
+-- You can also add helpers like CreateButton, CreateSection here...
 function UILibrary:CreateSection(parent, text, yOffset)
 	local section = Instance.new("TextLabel")
 	section.Text = text or "Section"
 	section.Size = UDim2.new(1, -20, 0, 20)
-	section.Position = UDim2.new(0, 10, 0, yOffset or 40)
+	section.Position = UDim2.new(0, 10, 0, yOffset or 10)
 	section.BackgroundTransparency = 1
 	section.TextColor3 = Color3.fromRGB(200, 200, 200)
 	section.Font = Enum.Font.GothamMedium
@@ -60,13 +103,12 @@ function UILibrary:CreateSection(parent, text, yOffset)
 	return section
 end
 
--- Create a button
 function UILibrary:CreateButton(parent, text, yOffset, callback)
 	local button = Instance.new("TextButton")
 	button.Text = text or "Button"
 	button.Size = UDim2.new(1, -20, 0, 30)
-	button.Position = UDim2.new(0, 10, 0, yOffset or 70)
-	button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	button.Position = UDim2.new(0, 10, 0, yOffset or 40)
+	button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.Font = Enum.Font.Gotham
 	button.TextSize = 14
