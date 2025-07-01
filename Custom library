@@ -1,222 +1,112 @@
-local KavoUI = {}
+local library = {}
 
-local function createInstance(instanceType, parent, properties)
-    local inst = Instance.new(instanceType)
-    for prop, value in pairs(properties) do
-        inst[prop] = value
-    end
-    inst.Parent = parent
-    return inst
+-- Services
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+-- Setup
+local gui = Instance.new("ScreenGui", CoreGui)
+gui.Name = "CustomUILib"
+gui.ResetOnSpawn = false
+
+-- Drag Function
+local function dragify(frame)
+	local dragging, offset
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			offset = input.Position - frame.Position
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			frame.Position = UDim2.new(0, input.Position.X - offset.X, 0, input.Position.Y - offset.Y)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
 end
 
--- Main UI creation
-function KavoUI:CreateUI(parent)
-    local Main = createInstance("Frame", parent, {
-        Size = UDim2.new(0.6, 0, 0.8, 0),
-        Position = UDim2.new(0.2, 0, 0.1, 0),
-        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-        BorderSizePixel = 0,
-        Name = "KavoMainUI"
-    })
+-- Main Window
+function library:CreateWindow(titleText)
+	local main = Instance.new("Frame", gui)
+	main.Size = UDim2.new(0, 700, 0, 400)
+	main.Position = UDim2.new(0.5, -350, 0.5, -200)
+	main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	main.BorderSizePixel = 0
 
-    -- Title
-    local Title = createInstance("TextLabel", Main, {
-        Text = "Kavo UI",
-        Size = UDim2.new(1, 0, 0, 50),
-        BackgroundTransparency = 1,
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextSize = 24,
-        TextXAlignment = Enum.TextXAlignment.Center
-    })
+	local title = Instance.new("TextLabel", main)
+	title.Text = titleText or "Title"
+	title.Size = UDim2.new(0, 200, 0, 40)
+	title.Position = UDim2.new(0, 20, 0, 10)
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Font = Enum.Font.SourceSansBold
+	title.TextSize = 32
+	title.BackgroundTransparency = 1
 
-    -- Tabs container
-    local TabsFrame = createInstance("Frame", Main, {
-        Size = UDim2.new(1, 0, 0, 50),
-        Position = UDim2.new(0, 0, 0, 50),
-        BackgroundTransparency = 1
-    })
+	local close = Instance.new("TextButton", main)
+	close.Text = "X"
+	close.Size = UDim2.new(0, 30, 0, 30)
+	close.Position = UDim2.new(1, -40, 0, 10)
+	close.BackgroundTransparency = 1
+	close.TextColor3 = Color3.new(1, 1, 1)
+	close.Font = Enum.Font.SourceSansBold
+	close.TextSize = 24
+	close.MouseButton1Click:Connect(function()
+		gui:Destroy()
+	end)
 
-    -- Content container
-    local ContentFrame = createInstance("Frame", Main, {
-        Size = UDim2.new(1, 0, 1, -100),
-        Position = UDim2.new(0, 0, 0, 100),
-        BackgroundTransparency = 1
-    })
+	dragify(main)
 
-    -- Table to hold tabs
-    local Tabs = {}
+	return {
+		Main = main,
+		AddTab = function(_, tabName)
+			local tab = Instance.new("TextButton", main)
+			tab.Size = UDim2.new(0, 160, 0, 50)
+			tab.Position = UDim2.new(0, 20, 0, 60)
+			tab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+			tab.Text = tabName
+			tab.Font = Enum.Font.SourceSansBold
+			tab.TextSize = 26
+			tab.TextColor3 = Color3.new(1, 1, 1)
 
-    -- Function to create tabs
-    function KavoUI:CreateTab(name)
-        local tabButton = createInstance("TextButton", TabsFrame, {
-            Text = name,
-            Size = UDim2.new(0, 100, 1, 0),
-            BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-            TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.GothamMedium,
-            TextSize = 16,
-            BorderSizePixel = 0
-        })
+			return {
+				AddSection = function(_, sectionName)
+					local section = Instance.new("TextLabel", main)
+					section.Size = UDim2.new(0, 400, 0, 50)
+					section.Position = UDim2.new(0, 200, 0, 60)
+					section.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+					section.Text = sectionName
+					section.Font = Enum.Font.SourceSansBold
+					section.TextSize = 26
+					section.TextColor3 = Color3.new(1, 1, 1)
 
-        local sectionContainer = createInstance("Frame", ContentFrame, {
-            Size = UDim2.new(1, 0, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Visible = false
-        })
+					return {
+						AddButton = function(_, buttonText, callback)
+							local button = Instance.new("TextButton", main)
+							button.Size = UDim2.new(0, 400, 0, 50)
+							button.Position = UDim2.new(0, 200, 0, 120)
+							button.BackgroundColor3 = Color3.fromRGB(160, 160, 160)
+							button.Text = buttonText
+							button.Font = Enum.Font.SourceSansBold
+							button.TextSize = 26
+							button.TextColor3 = Color3.new(1, 1, 1)
+							button.MouseButton1Click:Connect(callback)
 
-        -- Store in Tabs table
-        Tabs[name] = {
-            Button = tabButton,
-            Section = sectionContainer
-        }
-
-        -- Button click logic
-        for tabName, tabData in pairs(Tabs) do
-            tabData.Button.MouseButton1Click:Connect(function()
-                -- Hide all sections
-                for _, t in pairs(Tabs) do
-                    t.Section.Visible = false
-                end
-                -- Show selected
-                tabData.Section.Visible = true
-            end)
-        end
-
-        return Tabs[name]
-    end
-
-    return {
-        Main = Main,
-        Title = Title,
-        Tabs = Tabs,
-        Content = ContentFrame,
-        CreateTab = function(name)
-            return KavoUI:CreateTab(name)
-        end
-    }
+							local fingerprint = Instance.new("ImageLabel", button)
+							fingerprint.Size = UDim2.new(0, 30, 0, 30)
+							fingerprint.Position = UDim2.new(1, -40, 0.5, -15)
+							fingerprint.BackgroundTransparency = 1
+							fingerprint.Image = "rbxassetid://00000000" -- 🔁 Replace with fingerprint asset ID
+						end
+					}
+				end
+			}
+		end
+	}
 end
 
--- Title component
-function KavoUI:CreateTitle(parent, text)
-    return createInstance("TextLabel", parent, {
-        Text = text,
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundTransparency = 1,
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextSize = 20,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-end
-
--- Section component
-function KavoUI:CreateSection(parent, title)
-    local section = createInstance("Frame", parent, {
-        Size = UDim2.new(1, 0, 0, 150),
-        BackgroundColor3 = Color3.fromRGB(35, 35, 35),
-        BorderSizePixel = 0
-    })
-
-    -- Section title
-    self:CreateTitle(section, title)
-
-    -- Container for elements
-    local container = createInstance("Frame", section, {
-        Size = UDim2.new(1, -20, 1, -40),
-        Position = UDim2.new(0, 10, 0, 40),
-        BackgroundTransparency = 1
-    })
-
-    return container
-end
-
--- Button component
-function KavoUI:CreateButton(parent, text, callback)
-    local btn = createInstance("TextButton", parent, {
-        Text = text,
-        Size = UDim2.new(0, 120, 0, 40),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamMedium,
-        TextSize = 16,
-        BorderSizePixel = 0
-    })
-
-    if callback then
-        btn.MouseButton1Click:Connect(callback)
-    end
-
-    return btn
-end
-
--- Checkbox component
-function KavoUI:CreateCheckbox(parent, labelText, default, callback)
-    local container = createInstance("Frame", parent, {
-        Size = UDim2.new(1, 0, 0, 30),
-        BackgroundTransparency = 1
-    })
-
-    local box = createInstance("Frame", container, {
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(0, 0, 0.5, -10),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-        BorderSizePixel = 0
-    })
-
-    local check = createInstance("Frame", box, {
-        Size = UDim2.new(1, -4, 1, -4),
-        Position = UDim2.new(0, 2, 0, 2),
-        BackgroundColor3 = Color3.fromRGB(0, 170, 0),
-        BorderSizePixel = 0,
-        Visible = default or false
-    })
-
-    local label = createInstance("TextLabel", container, {
-        Text = labelText,
-        Size = UDim2.new(1, -25, 1, 0),
-        Position = UDim2.new(0, 25, 0, 0),
-        BackgroundTransparency = 1,
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.Gotham,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-
-    local toggled = default or false
-
-    container.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            toggled = not toggled
-            check.Visible = toggled
-            if callback then
-                callback(toggled)
-            end
-        end
-    end)
-
-    -- Alternatively, add click detection
-    container.Active = true
-    container.Selectable = true
-
-    container.MouseButton1Click = function()
-        toggled = not toggled
-        check.Visible = toggled
-        if callback then
-            callback(toggled)
-        end
-    end
-
-    return {
-        Toggle = function(state)
-            toggled = state
-            check.Visible = toggled
-        end,
-        IsChecked = function()
-            return toggled
-        end
-    }
-end
-
-return KavoUI
+return library
