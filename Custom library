@@ -4,7 +4,6 @@ local library = {}
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
--- Setup
 local gui = Instance.new("ScreenGui", CoreGui)
 gui.Name = "CustomUILib"
 gui.ResetOnSpawn = false
@@ -33,10 +32,11 @@ end
 -- Main Window
 function library:CreateWindow(titleText)
 	local main = Instance.new("Frame", gui)
-	main.Size = UDim2.new(0, 700, 0, 400)
-	main.Position = UDim2.new(0.5, -350, 0.5, -200)
+	main.Size = UDim2.new(0, 700, 0, 500)
+	main.Position = UDim2.new(0.5, -350, 0.5, -250)
 	main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 	main.BorderSizePixel = 0
+	main.Name = "MainUI"
 
 	local title = Instance.new("TextLabel", main)
 	title.Text = titleText or "Title"
@@ -61,50 +61,88 @@ function library:CreateWindow(titleText)
 
 	dragify(main)
 
+	local currentTab = nil
+	local tabList = {}
+
+	-- Tab Creation
+	local function createTab(tabName)
+		local tabButton = Instance.new("TextButton", main)
+		tabButton.Size = UDim2.new(0, 160, 0, 50)
+		tabButton.Position = UDim2.new(0, 20, 0, 60 + #tabList * 60)
+		tabButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		tabButton.Text = tabName
+		tabButton.Font = Enum.Font.SourceSansBold
+		tabButton.TextSize = 26
+		tabButton.TextColor3 = Color3.new(1, 1, 1)
+
+		local tabContent = Instance.new("Frame", main)
+		tabContent.Size = UDim2.new(0, 470, 0, 400)
+		tabContent.Position = UDim2.new(0, 200, 0, 60)
+		tabContent.BackgroundTransparency = 1
+		tabContent.Visible = false
+		tabContent.Name = "TabContent_" .. tabName
+
+		tabButton.MouseButton1Click:Connect(function()
+			if currentTab then
+				currentTab.Visible = false
+			end
+			tabContent.Visible = true
+			currentTab = tabContent
+		end)
+
+		table.insert(tabList, tabButton)
+
+		if #tabList == 1 then
+			tabContent.Visible = true
+			currentTab = tabContent
+		end
+
+		local sections = {}
+		local sectionYOffset = 0
+
+		return {
+			AddSection = function(_, sectionName)
+				local sectionLabel = Instance.new("TextLabel", tabContent)
+				sectionLabel.Size = UDim2.new(1, 0, 0, 40)
+				sectionLabel.Position = UDim2.new(0, 0, 0, sectionYOffset)
+				sectionLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+				sectionLabel.Text = sectionName
+				sectionLabel.Font = Enum.Font.SourceSansBold
+				sectionLabel.TextSize = 26
+				sectionLabel.TextColor3 = Color3.new(1, 1, 1)
+				sectionYOffset += 50
+
+				local buttonYOffset = sectionYOffset
+
+				return {
+					AddButton = function(_, buttonText, callback)
+						local button = Instance.new("TextButton", tabContent)
+						button.Size = UDim2.new(1, 0, 0, 50)
+						button.Position = UDim2.new(0, 0, 0, buttonYOffset)
+						button.BackgroundColor3 = Color3.fromRGB(160, 160, 160)
+						button.Text = buttonText
+						button.Font = Enum.Font.SourceSansBold
+						button.TextSize = 26
+						button.TextColor3 = Color3.new(1, 1, 1)
+						button.MouseButton1Click:Connect(callback)
+
+						local icon = Instance.new("ImageLabel", button)
+						icon.Size = UDim2.new(0, 30, 0, 30)
+						icon.Position = UDim2.new(1, -40, 0.5, -15)
+						icon.BackgroundTransparency = 1
+						icon.Image = "rbxassetid://00000000" -- Change this to a valid fingerprint image
+
+						buttonYOffset += 60
+						sectionYOffset = buttonYOffset
+					end
+				}
+			end
+		}
+	end
+
 	return {
-		Main = main,
-		AddTab = function(_, tabName)
-			local tab = Instance.new("TextButton", main)
-			tab.Size = UDim2.new(0, 160, 0, 50)
-			tab.Position = UDim2.new(0, 20, 0, 60)
-			tab.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-			tab.Text = tabName
-			tab.Font = Enum.Font.SourceSansBold
-			tab.TextSize = 26
-			tab.TextColor3 = Color3.new(1, 1, 1)
-
-			return {
-				AddSection = function(_, sectionName)
-					local section = Instance.new("TextLabel", main)
-					section.Size = UDim2.new(0, 400, 0, 50)
-					section.Position = UDim2.new(0, 200, 0, 60)
-					section.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-					section.Text = sectionName
-					section.Font = Enum.Font.SourceSansBold
-					section.TextSize = 26
-					section.TextColor3 = Color3.new(1, 1, 1)
-
-					return {
-						AddButton = function(_, buttonText, callback)
-							local button = Instance.new("TextButton", main)
-							button.Size = UDim2.new(0, 400, 0, 50)
-							button.Position = UDim2.new(0, 200, 0, 120)
-							button.BackgroundColor3 = Color3.fromRGB(160, 160, 160)
-							button.Text = buttonText
-							button.Font = Enum.Font.SourceSansBold
-							button.TextSize = 26
-							button.TextColor3 = Color3.new(1, 1, 1)
-							button.MouseButton1Click:Connect(callback)
-
-							local fingerprint = Instance.new("ImageLabel", button)
-							fingerprint.Size = UDim2.new(0, 30, 0, 30)
-							fingerprint.Position = UDim2.new(1, -40, 0.5, -15)
-							fingerprint.BackgroundTransparency = 1
-							fingerprint.Image = "rbxassetid://00000000" -- 🔁 Replace with fingerprint asset ID
-						end
-					}
-				end
-			}
+		AddTab = function(_, name)
+			return createTab(name)
 		end
 	}
 end
