@@ -1,116 +1,84 @@
--- UILibrary
 local UILibrary = {}
-local UserInputService = game:GetService("UserInputService")
 
-local function create(className, props)
-	local obj = Instance.new(className)
-	for k, v in pairs(props) do
-		obj[k] = v
-	end
-	return obj
+-- Utility: Rounded corners
+local function roundify(obj, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, radius or 8)
+	corner.Parent = obj
 end
 
+-- Utility: Add border stroke
+local function addStroke(obj)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(64, 64, 64)
+	stroke.Thickness = 1
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = obj
+end
+
+-- Create base UI window
 function UILibrary:CreateWindow(titleText)
-	local player = game.Players.LocalPlayer
-	local screenGui = create("ScreenGui", {
-		Name = "CustomUI",
-		ResetOnSpawn = false,
-		Parent = player:WaitForChild("PlayerGui")
-	})
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "CustomUILibrary"
+	screenGui.ResetOnSpawn = false
+	screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-	local mainFrame = create("Frame", {
-		Name = "MainFrame",
-		Size = UDim2.new(0, 300, 0, 250),
-		Position = UDim2.new(0.5, -150, 0.5, -125),
-		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-		BorderSizePixel = 0,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Parent = screenGui
-	})
+	local main = Instance.new("Frame")
+	main.Size = UDim2.new(0, 360, 0, 300)
+	main.Position = UDim2.new(0.5, -180, 0.5, -150)
+	main.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+	main.Parent = screenGui
+	roundify(main)
+	addStroke(main)
 
-	local titleBar = create("TextLabel", {
-		Name = "TitleBar",
-		Size = UDim2.new(1, 0, 0, 35),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-		Text = titleText or "My Window",
-		TextColor3 = Color3.new(1, 1, 1),
-		Font = Enum.Font.GothamBold,
-		TextSize = 18,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		Parent = mainFrame
-	})
+	local title = Instance.new("TextLabel")
+	title.Text = titleText or "Window"
+	title.Size = UDim2.new(1, -20, 0, 30)
+	title.Position = UDim2.new(0, 10, 0, 5)
+	title.BackgroundTransparency = 1
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 16
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = main
 
-	local buttonHolder = create("Frame", {
-		Name = "ButtonHolder",
-		Size = UDim2.new(1, 0, 1, -35),
-		Position = UDim2.new(0, 0, 0, 35),
-		BackgroundTransparency = 1,
-		Parent = mainFrame
-	})
+	return main
+end
 
-	local layout = create("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		Padding = UDim.new(0, 6),
-		Parent = buttonHolder
-	})
+-- Create a section label
+function UILibrary:CreateSection(parent, text, yOffset)
+	local section = Instance.new("TextLabel")
+	section.Text = text or "Section"
+	section.Size = UDim2.new(1, -20, 0, 20)
+	section.Position = UDim2.new(0, 10, 0, yOffset or 40)
+	section.BackgroundTransparency = 1
+	section.TextColor3 = Color3.fromRGB(200, 200, 200)
+	section.Font = Enum.Font.GothamMedium
+	section.TextSize = 14
+	section.TextXAlignment = Enum.TextXAlignment.Left
+	section.Parent = parent
+	return section
+end
 
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	layout.VerticalAlignment = Enum.VerticalAlignment.Top
+-- Create a button
+function UILibrary:CreateButton(parent, text, yOffset, callback)
+	local button = Instance.new("TextButton")
+	button.Text = text or "Button"
+	button.Size = UDim2.new(1, -20, 0, 30)
+	button.Position = UDim2.new(0, 10, 0, yOffset or 70)
+	button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.Font = Enum.Font.Gotham
+	button.TextSize = 14
+	button.AutoButtonColor = true
+	button.Parent = parent
+	roundify(button)
 
-	-- Drag logic
-	local dragging = false
-	local dragInput, dragStart, startPos
-
-	local function update(input)
-		local delta = input.Position - dragStart
-		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	if callback then
+		button.MouseButton1Click:Connect(callback)
 	end
 
-	titleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = mainFrame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-
-	titleBar.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			update(input)
-		end
-	end)
-
-	-- Add Button method
-	function UILibrary:AddButton(buttonText, callback)
-		local btn = create("TextButton", {
-			Text = buttonText,
-			Size = UDim2.new(0.9, 0, 0, 32),
-			Font = Enum.Font.Gotham,
-			TextSize = 14,
-			TextColor3 = Color3.fromRGB(255, 255, 255),
-			BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-			BorderSizePixel = 0,
-			Parent = buttonHolder
-		})
-
-		btn.MouseButton1Click:Connect(function()
-			if callback then callback() end
-		end)
-	end
-
-	return UILibrary
+	return button
 end
 
 return UILibrary
