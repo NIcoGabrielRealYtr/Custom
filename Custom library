@@ -1,126 +1,222 @@
-local UILibrary = {}
+local KavoUI = {}
 
-local function roundify(obj, radius)
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, radius or 8)
-	corner.Parent = obj
+local function createInstance(instanceType, parent, properties)
+    local inst = Instance.new(instanceType)
+    for prop, value in pairs(properties) do
+        inst[prop] = value
+    end
+    inst.Parent = parent
+    return inst
 end
 
--- Tab handling
-function UILibrary:CreateWindow(titleText)
-	local player = game.Players.LocalPlayer
-	local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-	screenGui.Name = "CustomUILibrary"
-	screenGui.ResetOnSpawn = false
+-- Main UI creation
+function KavoUI:CreateUI(parent)
+    local Main = createInstance("Frame", parent, {
+        Size = UDim2.new(0.6, 0, 0.8, 0),
+        Position = UDim2.new(0.2, 0, 0.1, 0),
+        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+        BorderSizePixel = 0,
+        Name = "KavoMainUI"
+    })
 
-	local main = Instance.new("Frame")
-	main.Size = UDim2.new(0, 400, 0, 350)
-	main.Position = UDim2.new(0.5, -200, 0.5, -175)
-	main.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
-	main.Parent = screenGui
-	roundify(main)
+    -- Title
+    local Title = createInstance("TextLabel", Main, {
+        Text = "Kavo UI",
+        Size = UDim2.new(1, 0, 0, 50),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 24,
+        TextXAlignment = Enum.TextXAlignment.Center
+    })
 
-	local title = Instance.new("TextLabel", main)
-	title.Size = UDim2.new(1, -20, 0, 30)
-	title.Position = UDim2.new(0, 10, 0, 5)
-	title.BackgroundTransparency = 1
-	title.Text = titleText or "UI Library"
-	title.TextColor3 = Color3.fromRGB(255, 255, 255)
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 16
-	title.TextXAlignment = Enum.TextXAlignment.Left
+    -- Tabs container
+    local TabsFrame = createInstance("Frame", Main, {
+        Size = UDim2.new(1, 0, 0, 50),
+        Position = UDim2.new(0, 0, 0, 50),
+        BackgroundTransparency = 1
+    })
 
-	local tabHolder = Instance.new("Frame", main)
-	tabHolder.Size = UDim2.new(1, 0, 0, 30)
-	tabHolder.Position = UDim2.new(0, 0, 0, 40)
-	tabHolder.BackgroundTransparency = 1
+    -- Content container
+    local ContentFrame = createInstance("Frame", Main, {
+        Size = UDim2.new(1, 0, 1, -100),
+        Position = UDim2.new(0, 0, 0, 100),
+        BackgroundTransparency = 1
+    })
 
-	local tabLayout = Instance.new("UIListLayout", tabHolder)
-	tabLayout.FillDirection = Enum.FillDirection.Horizontal
-	tabLayout.Padding = UDim.new(0, 4)
-	tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    -- Table to hold tabs
+    local Tabs = {}
 
-	local contentFrame = Instance.new("Frame", main)
-	contentFrame.Size = UDim2.new(1, -20, 1, -80)
-	contentFrame.Position = UDim2.new(0, 10, 0, 80)
-	contentFrame.BackgroundTransparency = 1
+    -- Function to create tabs
+    function KavoUI:CreateTab(name)
+        local tabButton = createInstance("TextButton", TabsFrame, {
+            Text = name,
+            Size = UDim2.new(0, 100, 1, 0),
+            BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = Enum.Font.GothamMedium,
+            TextSize = 16,
+            BorderSizePixel = 0
+        })
 
-	local tabs = {}
+        local sectionContainer = createInstance("Frame", ContentFrame, {
+            Size = UDim2.new(1, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Visible = false
+        })
 
-	local function switchTo(tabName)
-		for name, frame in pairs(tabs) do
-			frame.Visible = (name == tabName)
-		end
-	end
+        -- Store in Tabs table
+        Tabs[name] = {
+            Button = tabButton,
+            Section = sectionContainer
+        }
 
-	local function addTab(tabName)
-		local button = Instance.new("TextButton", tabHolder)
-		button.Text = tabName
-		button.Size = UDim2.new(0, 100, 1, 0)
-		button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-		button.TextColor3 = Color3.fromRGB(255, 255, 255)
-		button.Font = Enum.Font.Gotham
-		button.TextSize = 14
-		button.AutoButtonColor = true
-		roundify(button)
+        -- Button click logic
+        for tabName, tabData in pairs(Tabs) do
+            tabData.Button.MouseButton1Click:Connect(function()
+                -- Hide all sections
+                for _, t in pairs(Tabs) do
+                    t.Section.Visible = false
+                end
+                -- Show selected
+                tabData.Section.Visible = true
+            end)
+        end
 
-		local tabContent = Instance.new("Frame", contentFrame)
-		tabContent.Size = UDim2.new(1, 0, 1, 0)
-		tabContent.Visible = false
-		tabContent.BackgroundTransparency = 1
+        return Tabs[name]
+    end
 
-		tabs[tabName] = tabContent
-
-		button.MouseButton1Click:Connect(function()
-			switchTo(tabName)
-		end)
-
-		if #tabHolder:GetChildren() == 2 then -- first tab
-			switchTo(tabName)
-		end
-
-		return tabContent
-	end
-
-	return {
-		Main = main,
-		AddTab = addTab
-	}
+    return {
+        Main = Main,
+        Title = Title,
+        Tabs = Tabs,
+        Content = ContentFrame,
+        CreateTab = function(name)
+            return KavoUI:CreateTab(name)
+        end
+    }
 end
 
--- You can also add helpers like CreateButton, CreateSection here...
-function UILibrary:CreateSection(parent, text, yOffset)
-	local section = Instance.new("TextLabel")
-	section.Text = text or "Section"
-	section.Size = UDim2.new(1, -20, 0, 20)
-	section.Position = UDim2.new(0, 10, 0, yOffset or 10)
-	section.BackgroundTransparency = 1
-	section.TextColor3 = Color3.fromRGB(200, 200, 200)
-	section.Font = Enum.Font.GothamMedium
-	section.TextSize = 14
-	section.TextXAlignment = Enum.TextXAlignment.Left
-	section.Parent = parent
-	return section
+-- Title component
+function KavoUI:CreateTitle(parent, text)
+    return createInstance("TextLabel", parent, {
+        Text = text,
+        Size = UDim2.new(1, 0, 0, 40),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 20,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
 end
 
-function UILibrary:CreateButton(parent, text, yOffset, callback)
-	local button = Instance.new("TextButton")
-	button.Text = text or "Button"
-	button.Size = UDim2.new(1, -20, 0, 30)
-	button.Position = UDim2.new(0, 10, 0, yOffset or 40)
-	button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.Gotham
-	button.TextSize = 14
-	button.AutoButtonColor = true
-	button.Parent = parent
-	roundify(button)
+-- Section component
+function KavoUI:CreateSection(parent, title)
+    local section = createInstance("Frame", parent, {
+        Size = UDim2.new(1, 0, 0, 150),
+        BackgroundColor3 = Color3.fromRGB(35, 35, 35),
+        BorderSizePixel = 0
+    })
 
-	if callback then
-		button.MouseButton1Click:Connect(callback)
-	end
+    -- Section title
+    self:CreateTitle(section, title)
 
-	return button
+    -- Container for elements
+    local container = createInstance("Frame", section, {
+        Size = UDim2.new(1, -20, 1, -40),
+        Position = UDim2.new(0, 10, 0, 40),
+        BackgroundTransparency = 1
+    })
+
+    return container
 end
 
-return UILibrary
+-- Button component
+function KavoUI:CreateButton(parent, text, callback)
+    local btn = createInstance("TextButton", parent, {
+        Text = text,
+        Size = UDim2.new(0, 120, 0, 40),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.GothamMedium,
+        TextSize = 16,
+        BorderSizePixel = 0
+    })
+
+    if callback then
+        btn.MouseButton1Click:Connect(callback)
+    end
+
+    return btn
+end
+
+-- Checkbox component
+function KavoUI:CreateCheckbox(parent, labelText, default, callback)
+    local container = createInstance("Frame", parent, {
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundTransparency = 1
+    })
+
+    local box = createInstance("Frame", container, {
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 0, 0.5, -10),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        BorderSizePixel = 0
+    })
+
+    local check = createInstance("Frame", box, {
+        Size = UDim2.new(1, -4, 1, -4),
+        Position = UDim2.new(0, 2, 0, 2),
+        BackgroundColor3 = Color3.fromRGB(0, 170, 0),
+        BorderSizePixel = 0,
+        Visible = default or false
+    })
+
+    local label = createInstance("TextLabel", container, {
+        Text = labelText,
+        Size = UDim2.new(1, -25, 1, 0),
+        Position = UDim2.new(0, 25, 0, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.Gotham,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    local toggled = default or false
+
+    container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggled = not toggled
+            check.Visible = toggled
+            if callback then
+                callback(toggled)
+            end
+        end
+    end)
+
+    -- Alternatively, add click detection
+    container.Active = true
+    container.Selectable = true
+
+    container.MouseButton1Click = function()
+        toggled = not toggled
+        check.Visible = toggled
+        if callback then
+            callback(toggled)
+        end
+    end
+
+    return {
+        Toggle = function(state)
+            toggled = state
+            check.Visible = toggled
+        end,
+        IsChecked = function()
+            return toggled
+        end
+    }
+end
+
+return KavoUI
