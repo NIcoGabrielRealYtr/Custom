@@ -1,0 +1,116 @@
+-- UILibrary
+local UILibrary = {}
+local UserInputService = game:GetService("UserInputService")
+
+local function create(className, props)
+	local obj = Instance.new(className)
+	for k, v in pairs(props) do
+		obj[k] = v
+	end
+	return obj
+end
+
+function UILibrary:CreateWindow(titleText)
+	local player = game.Players.LocalPlayer
+	local screenGui = create("ScreenGui", {
+		Name = "CustomUI",
+		ResetOnSpawn = false,
+		Parent = player:WaitForChild("PlayerGui")
+	})
+
+	local mainFrame = create("Frame", {
+		Name = "MainFrame",
+		Size = UDim2.new(0, 300, 0, 250),
+		Position = UDim2.new(0.5, -150, 0.5, -125),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+		BorderSizePixel = 0,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Parent = screenGui
+	})
+
+	local titleBar = create("TextLabel", {
+		Name = "TitleBar",
+		Size = UDim2.new(1, 0, 0, 35),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+		Text = titleText or "My Window",
+		TextColor3 = Color3.new(1, 1, 1),
+		Font = Enum.Font.GothamBold,
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = mainFrame
+	})
+
+	local buttonHolder = create("Frame", {
+		Name = "ButtonHolder",
+		Size = UDim2.new(1, 0, 1, -35),
+		Position = UDim2.new(0, 0, 0, 35),
+		BackgroundTransparency = 1,
+		Parent = mainFrame
+	})
+
+	local layout = create("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 6),
+		Parent = buttonHolder
+	})
+
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+	-- Drag logic
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+
+	titleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainFrame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	titleBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+
+	-- Add Button method
+	function UILibrary:AddButton(buttonText, callback)
+		local btn = create("TextButton", {
+			Text = buttonText,
+			Size = UDim2.new(0.9, 0, 0, 32),
+			Font = Enum.Font.Gotham,
+			TextSize = 14,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+			BorderSizePixel = 0,
+			Parent = buttonHolder
+		})
+
+		btn.MouseButton1Click:Connect(function()
+			if callback then callback() end
+		end)
+	end
+
+	return UILibrary
+end
+
+return UILibrary
