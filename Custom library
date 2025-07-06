@@ -1,88 +1,93 @@
--- ApeiroLib.lua
-local ApeiroLib = {}
+-- Simple UI Library (with Tabs and Buttons)
+local UI_Lib = {}
 
-function ApeiroLib:CreateWindow(titleText)
-    local gui = Instance.new("ScreenGui", game.CoreGui)
-    gui.Name = "ApeiroLib"
+-- Create the base UI
+function UI_Lib:CreateWindow(title)
+    local screenGui = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"))
+    screenGui.Name = "CustomUILib"
+    screenGui.ResetOnSpawn = false
 
-    local frame = Instance.new("Frame", gui)
-    frame.Size = UDim2.new(0, 450, 0, 320)
-    frame.Position = UDim2.new(0.5, -225, 0.5, -160)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    frame.BorderSizePixel = 0
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 500, 0, 300)
+    mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Name = "MainFrame"
+    
+    local titleLabel = Instance.new("TextLabel", mainFrame)
+    titleLabel.Size = UDim2.new(1, 0, 0, 40)
+    titleLabel.Text = title or "Window"
+    titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 18
+    titleLabel.BorderSizePixel = 0
 
-    local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.Font = Enum.Font.SourceSansBold
-    title.TextSize = 22
-    title.Text = titleText or "Apeirophobia UI"
+    local tabButtons = Instance.new("Frame", mainFrame)
+    tabButtons.Size = UDim2.new(0, 120, 1, -40)
+    tabButtons.Position = UDim2.new(0, 0, 0, 40)
+    tabButtons.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
-    local tabFrame = Instance.new("Frame", frame)
-    tabFrame.Size = UDim2.new(0, 130, 1, -40)
-    tabFrame.Position = UDim2.new(0, 0, 0, 40)
-    tabFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    local tabPages = Instance.new("Frame", mainFrame)
+    tabPages.Size = UDim2.new(1, -120, 1, -40)
+    tabPages.Position = UDim2.new(0, 120, 0, 40)
+    tabPages.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 
-    local mainContent = Instance.new("Frame", frame)
-    mainContent.Size = UDim2.new(1, -130, 1, -40)
-    mainContent.Position = UDim2.new(0, 130, 0, 40)
-    mainContent.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    local UIList = Instance.new("UIListLayout", tabButtons)
+    UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
     local tabs = {}
 
-    function ApeiroLib:CreateTab(name)
-        local tabBtn = Instance.new("TextButton", tabFrame)
-        tabBtn.Size = UDim2.new(1, 0, 0, 30)
-        tabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        tabBtn.Text = name
-        tabBtn.Font = Enum.Font.SourceSans
-        tabBtn.TextSize = 18
+    function UI_Lib:CreateTab(name)
+        local tabButton = Instance.new("TextButton", tabButtons)
+        tabButton.Size = UDim2.new(1, 0, 0, 30)
+        tabButton.Text = name
+        tabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tabButton.Font = Enum.Font.Gotham
+        tabButton.TextSize = 14
 
-        local contentFrame = Instance.new("Frame", mainContent)
-        contentFrame.Size = UDim2.new(1, 0, 1, 0)
-        contentFrame.BackgroundTransparency = 1
-        contentFrame.Visible = false
+        local tabFrame = Instance.new("ScrollingFrame", tabPages)
+        tabFrame.Size = UDim2.new(1, 0, 1, 0)
+        tabFrame.Visible = false
+        tabFrame.BackgroundTransparency = 1
+        tabFrame.ScrollBarThickness = 5
+        tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 
-        local layout = Instance.new("UIListLayout", contentFrame)
-        layout.Padding = UDim.new(0, 5)
+        local tabList = Instance.new("UIListLayout", tabFrame)
+        tabList.Padding = UDim.new(0, 5)
+        tabList.SortOrder = Enum.SortOrder.LayoutOrder
 
-        table.insert(tabs, {btn = tabBtn, frame = contentFrame})
-
-        tabBtn.MouseButton1Click:Connect(function()
+        tabButton.MouseButton1Click:Connect(function()
             for _, tab in pairs(tabs) do
-                tab.frame.Visible = false
-                tab.btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                tab.Frame.Visible = false
             end
-            contentFrame.Visible = true
-            tabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            tabFrame.Visible = true
         end)
 
+        local tabObj = {
+            Frame = tabFrame,
+            AddButton = function(_, btnText, callback)
+                local button = Instance.new("TextButton", tabFrame)
+                button.Size = UDim2.new(1, -10, 0, 30)
+                button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                button.TextColor3 = Color3.fromRGB(255, 255, 255)
+                button.Text = btnText
+                button.Font = Enum.Font.Gotham
+                button.TextSize = 14
+                button.BorderSizePixel = 0
+                button.MouseButton1Click:Connect(callback or function() end)
+            end
+        }
+
+        tabs[#tabs+1] = tabObj
         if #tabs == 1 then
-            contentFrame.Visible = true
-            tabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            tabFrame.Visible = true
         end
-
-        local tabAPI = {}
-
-        function tabAPI:AddButton(text, callback)
-            local btn = Instance.new("TextButton", contentFrame)
-            btn.Size = UDim2.new(1, -10, 0, 35)
-            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.Text = text
-            btn.Font = Enum.Font.SourceSans
-            btn.TextSize = 16
-            btn.MouseButton1Click:Connect(function()
-                pcall(callback)
-            end)
-        end
-
-        return tabAPI
+        return tabObj
     end
 
-    return ApeiroLib
+    return self
 end
 
-return ApeiroLib
+return UI_Lib
